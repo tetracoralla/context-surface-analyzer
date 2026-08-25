@@ -1,0 +1,25 @@
+{
+  "name": "@openadam/context-surface-analyzer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Deterministic analysis and comparison of explicit Agent tool catalog snapshots.",
+  "type": "module",
+  "bin": {
+    "context-surface": "./src/cli.js",
+    "context-surface-mcp": "./src/mcp-server.js"
+  },
+  "scripts": {
+    "build": "node scripts/build.js",
+    "start": "node src/ui-server.js",
+    "mcp": "node src/mcp-server.js",
+    "test": "node --test test/*.test.js",
+    "check:syntax": "node scripts/check-syntax.js",
+    "check:plugin": "node scripts/check-plugin.js",
+    "check:smoke": "node scripts/smoke.js",
+    "check": "npm run check:syntax && npm run build && npm run check:plugin && npm test && npm run check:smoke"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "UNLICENSED"
+}
