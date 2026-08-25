@@ -82,6 +82,8 @@ let skillMetadata = "";
 try {
   skill = await readFile(resolve(skillRoot, "SKILL.md"), "utf8");
   skillMetadata = await readFile(resolve(skillRoot, "agents/openai.yaml"), "utf8");
+  skill = skill.replace(/\r\n?/g, "\n");
+  skillMetadata = skillMetadata.replace(/\r\n?/g, "\n");
 } catch (error) {
   failures.push(`plugin Skill is incomplete: ${error instanceof Error ? error.message : error}`);
 }
