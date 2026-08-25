@@ -7,6 +7,18 @@ const pluginRoot = resolve(root, "plugins/context-surface-analyzer");
 const skillRoot = resolve(pluginRoot, "skills/analyze-context-surface");
 const failures = [];
 
+for (const file of ["LICENSE", "NOTICE"]) {
+  try {
+    const [source, packaged] = await Promise.all([
+      readFile(resolve(root, file), "utf8"),
+      readFile(resolve(pluginRoot, file), "utf8")
+    ]);
+    if (source !== packaged) failures.push(`plugin legal file is stale: ${file}`);
+  } catch (error) {
+    failures.push(`plugin legal file is missing: ${file}: ${error instanceof Error ? error.message : error}`);
+  }
+}
+
 async function readJson(path, label) {
   try {
     return JSON.parse(await readFile(path, "utf8"));

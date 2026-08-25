@@ -74,3 +74,7 @@ This is a local MVP. Development checks, direct runtime probes, installed Codex
 routing, production load behavior, public-release readiness, and owner visual
 acceptance remain separate claims. See [the review contract](docs/REVIEW_CONTRACT.md)
 and [the first real-catalog dogfood note](docs/DOGFOOD.md).
+
+## License
+
+Apache License 2.0. See `LICENSE` and `NOTICE`.

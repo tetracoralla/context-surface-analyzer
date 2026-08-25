@@ -29,6 +29,7 @@ await writeFile(
   }, null, 2)}\n`,
   "utf8"
 );
+for (const file of ["LICENSE", "NOTICE"]) await cp(file, `${pluginRoot}/${file}`);
 
 const target = "dist";
 await rm(target, { recursive: true, force: true });
@@ -36,7 +37,7 @@ await mkdir(target, { recursive: true });
 for (const directory of ["src", "web", "docs", "examples", "scripts", "test", "plugins", ".agents"]) {
   await cp(directory, `${target}/${directory}`, { recursive: true });
 }
-for (const file of ["README.md", "AGENTS.md", "package.json", ".gitignore"]) {
+for (const file of ["README.md", "AGENTS.md", "LICENSE", "NOTICE", "SECURITY.md", "package.json", "package-lock.json", ".gitignore"]) {
   await cp(file, `${target}/${file}`);
 }
 const builtPackageJson = JSON.parse(await readFile(`${target}/package.json`, "utf8"));

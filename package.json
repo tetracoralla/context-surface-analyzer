@@ -15,11 +15,18 @@
     "test": "node --test test/*.test.js",
     "check:syntax": "node scripts/check-syntax.js",
     "check:plugin": "node scripts/check-plugin.js",
+    "check:release": "node scripts/check-public-release.mjs",
     "check:smoke": "node scripts/smoke.js",
-    "check": "npm run check:syntax && npm run build && npm run check:plugin && npm test && npm run check:smoke"
+    "check": "npm run check:syntax && npm run build && npm run check:plugin && npm run check:release && npm test && npm run check:smoke"
   },
   "engines": {
     "node": ">=22"
   },
-  "license": "UNLICENSED"
+  "license": "Apache-2.0",
+  "author": "openAdam",
+  "homepage": "https://github.com/tetracoralla/context-surface-analyzer",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tetracoralla/context-surface-analyzer.git"
+  }
 }
