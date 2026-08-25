@@ -31,6 +31,9 @@ claims.
   limit requires a current consumer and a negative regression test.
 - Preserve one-call dominant Agent routes: `context.analyze` and `context.diff`.
 - Keep MCP annotations read-only, non-destructive, idempotent, and closed-world.
+- Keep the MCP carrier's 2025 legacy-era boundary explicit. Do not advertise
+  2026 modern-era support without the required per-era negotiation and wire
+  codec through a portable installed runtime.
 - Keep the human surface local, narrow, and free of Agent protocol metadata.
 - Add the smallest negative regression for every repaired guard or ambiguity.
 - Do not commit, push, publish, install globally, or edit a sibling repository

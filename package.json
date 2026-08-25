@@ -1,6 +1,6 @@
 {
   "name": "@openadam/context-surface-analyzer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Deterministic analysis and comparison of explicit Agent tool catalog snapshots.",
   "type": "module",

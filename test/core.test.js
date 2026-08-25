@@ -86,6 +86,28 @@ test("diffs uniquely named tools and refuses to guess collision pairs", () => {
   assert.equal(result.tools.reordered, null);
 });
 
+test("reports one-sided added and removed name collisions as ambiguous", () => {
+  const unique = snapshot({ tools: [] });
+  const colliding = snapshot({
+    tools: [
+      { name: "collision", inputSchema: true },
+      { name: "collision", inputSchema: false }
+    ]
+  });
+
+  const added = executeDiff(JSON.stringify(unique), JSON.stringify(colliding)).result;
+  assert.deepEqual(added.tools.added, []);
+  assert.deepEqual(added.tools.ambiguousDueToNameCollision, [
+    { name: "collision", beforeCount: 0, afterCount: 2 }
+  ]);
+
+  const removed = executeDiff(JSON.stringify(colliding), JSON.stringify(unique)).result;
+  assert.deepEqual(removed.tools.removed, []);
+  assert.deepEqual(removed.tools.ambiguousDueToNameCollision, [
+    { name: "collision", beforeCount: 2, afterCount: 0 }
+  ]);
+});
+
 test("compares only token measurements with identical provenance labels", () => {
   const base = {
     metric: "input_tokens",
@@ -125,6 +147,21 @@ test("rejects oversized raw input and over-deep schemas", () => {
     () => execute(snapshot({ tools: [{ name: "deep", inputSchema: nested }] })),
     (error) => error.code === "LIMIT_EXCEEDED"
   );
+});
+
+test("enforces the schema node limit cumulatively across one snapshot", () => {
+  const nodeHeavySchema = { values: Array(10_000).fill(null) };
+  assert.throws(
+    () => execute(snapshot({
+      tools: [
+        { name: "nodes.a", inputSchema: nodeHeavySchema },
+        { name: "nodes.b", inputSchema: nodeHeavySchema }
+      ]
+    })),
+    (error) => error.code === "LIMIT_EXCEEDED" && error.details.limit === LIMITS.maxSchemaNodes
+  );
+
+  assert.equal(execute(snapshot()).status, "ok");
 });
 
 test("enforces a caller output budget on the complete serialized result", () => {

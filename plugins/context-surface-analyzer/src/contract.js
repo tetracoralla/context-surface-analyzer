@@ -78,11 +78,11 @@ function inspectJsonValue(value, path, state, depth = 0) {
   fail("INVALID_SNAPSHOT", `${path} must contain JSON-compatible values only.`);
 }
 
-function validateSchema(schema, path) {
+function validateSchema(schema, path, requestState) {
   if (!(typeof schema === "boolean" || isRecord(schema))) {
     fail("INVALID_SNAPSHOT", `${path} must be a JSON Schema object or boolean.`);
   }
-  inspectJsonValue(schema, path, { nodes: 0 });
+  inspectJsonValue(schema, path, requestState);
   const bytes = utf8Bytes(canonicalize(schema));
   if (bytes > LIMITS.maxSchemaBytes) {
     fail("LIMIT_EXCEEDED", `${path} exceeds the canonical schema byte limit.`, {
@@ -105,6 +105,7 @@ function validateTools(tools) {
   if (tools.length > LIMITS.maxTools) {
     fail("LIMIT_EXCEEDED", "tools exceeds the tool count limit.", { actual: tools.length, limit: LIMITS.maxTools });
   }
+  const schemaState = { nodes: 0 };
   tools.forEach((tool, index) => {
     const path = `tools[${index}]`;
     assertRecord(tool, path);
@@ -112,8 +113,8 @@ function validateTools(tools) {
     assertString(tool.name, `${path}.name`, { maxBytes: 256 });
     assertString(tool.description, `${path}.description`, { required: false, maxBytes: 4096 });
     if (!("inputSchema" in tool)) fail("INVALID_SNAPSHOT", `${path}.inputSchema is required.`);
-    validateSchema(tool.inputSchema, `${path}.inputSchema`);
-    if ("outputSchema" in tool) validateSchema(tool.outputSchema, `${path}.outputSchema`);
+    validateSchema(tool.inputSchema, `${path}.inputSchema`, schemaState);
+    if ("outputSchema" in tool) validateSchema(tool.outputSchema, `${path}.outputSchema`, schemaState);
   });
 }
 

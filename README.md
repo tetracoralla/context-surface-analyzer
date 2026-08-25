@@ -49,6 +49,11 @@ Both accept snapshot JSON as bounded strings, so the Agent route has no ambient
 filesystem authority. See [the product model](docs/PRODUCT_MODEL.md) for the
 snapshot contract and exact semantics.
 
+This portable runtime intentionally serves the MCP 2025 legacy era through
+revision `2025-11-25`. Dual-era clients can identify that boundary from the
+`server/discover` method-not-found response and fall back to `initialize`.
+Modern-only 2026 transport is not claimed by this dependency-free plugin.
+
 ## Local Codex plugin
 
 Build and validate the repository-local plugin, add this repository as a local

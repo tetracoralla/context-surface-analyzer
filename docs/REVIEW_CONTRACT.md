@@ -26,8 +26,9 @@ node src/ui-server.js
 
 The test suite must exercise MCP `initialize`, `tools/list`, a valid
 `tools/call`, and an invalid `tools/call` over the actual stdio process. It must
-negotiate the current installed-host MCP revision and one supported legacy
-revision rather than fixing the response to an older protocol version.
+negotiate installed-host legacy revision `2025-11-25` and one supported older
+revision, and keep `server/discover` as an explicit `Method not found` boundary
+until the product ships a real 2026 per-era transport.
 
 ## Review invariants
 
@@ -42,11 +43,18 @@ revision rather than fixing the response to an older protocol version.
 - Token values appear only when supplied with complete measurement labels. No
   byte-to-token estimate is emitted.
 - A colliding tool name is not guessed into a diff pair.
-- Output limits apply to complete CLI results and MCP tool payloads, including
-  structured content and the concise text item.
+- Output limits apply to complete CLI results, complete MCP tool payloads
+  including structured content and the concise text item, and the bounded
+  serialized JSON-RPC response envelope.
 - MCP tools remain read-only, non-destructive, idempotent, and closed-world.
+- Malformed JSON-RPC envelopes and ids are rejected before dispatch. Oversized
+  lines are discarded through their newline, after which the same server
+  process accepts a later valid request.
+- A slow MCP output pauses input consumption until the writable stream drains,
+  preventing sustained callers from growing an unbounded response queue.
 - Malformed, oversized, too-deep, unknown-field, and result-budget failures use
-  stable bounded errors without echoing source text.
+  stable bounded errors without echoing source text; compact MCP errors
+  preserve the original stable code before omitting bounded details.
 - HTTP serves only the four allowlisted assets and two local POST operations.
   It has no general file route or network dependency.
 - The portable plugin manifest, marketplace entry, Skill, MCP configuration,
@@ -59,15 +67,21 @@ revision rather than fixing the response to an older protocol version.
 1. Analyze a valid snapshot, then the same object with reordered keys; require
    identical digest and canonical bytes.
 2. Supply two tools with one exact name; require a collision and no inferred
-   pair in a subsequent comparison.
+   pair in a subsequent comparison, including when the repeated name exists
+   only in the added or removed snapshot.
 3. Supply the same schema under different tools; require one exact duplicate
    group. Change one keyword; require the group to separate.
 4. Add an unknown top-level, tool, measurement, budget, HTTP, or MCP argument;
    require `UNKNOWN_FIELD` before analysis.
-5. Exceed raw bytes, schema depth, schema bytes, tool count, and result bytes;
-   require stable limit errors and successful handling of a later valid call.
+5. Exceed raw bytes, cumulative schema nodes, schema depth, schema bytes, tool
+   count, and result bytes; require stable limit errors and successful handling
+   of a later valid call.
 6. Compare token measurements with a mismatched model, serialization, or
    tokenizer version; require no numerical delta across unlike identities.
+7. Send missing-version, object-id, deeply nested-id, and oversized-line
+   JSON-RPC messages; require bounded protocol errors, no process crash, and a
+   successful ping on the same connection after each recoverable failure. Hold
+   output backpressure and require request consumption to pause until drain.
 
 ## Reporting lanes
 

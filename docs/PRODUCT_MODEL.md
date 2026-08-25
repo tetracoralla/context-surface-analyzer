@@ -24,6 +24,13 @@ only in the current page. CLI file paths are deliberate human/operator
 arguments; the MCP tools accept bounded snapshot JSON and have no filesystem
 authority.
 
+The portable MCP carrier serves the 2025 legacy protocol era through revision
+`2025-11-25`, which is the current installed Codex route for this product. It
+returns JSON-RPC `Method not found` to `server/discover`, allowing a dual-era
+client to identify it as legacy and reconnect through `initialize`. It does not
+claim the 2026 modern era; that requires the modern per-request envelope and
+wire codec, not only a discovery response.
+
 Snapshot acquisition remains outside the product. The current provider, host,
 or authorized exporter owns the live catalog and its revision. This product
 does not start an arbitrary provider, inspect a running host, or promote a
@@ -93,10 +100,13 @@ all measurement identity labels match. Missing measurements stay missing.
 
 - snapshot JSON: 512 KiB each;
 - tools: 128;
-- schemas: 64 KiB canonical JSON each, depth 32, 20,000 JSON nodes;
+- schemas: 64 KiB canonical JSON each, depth 32, and 20,000 JSON nodes
+  cumulatively across all input and output schemas in one snapshot;
 - measurements: 16;
 - complete result: 256 bytes through 128 KiB and may be lowered by the caller or snapshot;
-- local HTTP request body: 2,200 KiB.
+- local HTTP request body: 2,200 KiB;
+- MCP request line: 2,200 KiB, JSON-RPC id: 256 UTF-8 bytes, and complete
+  serialized MCP response envelope: 129 KiB.
 
 Limit failures use stable error codes and do not return the rejected source
 payload.

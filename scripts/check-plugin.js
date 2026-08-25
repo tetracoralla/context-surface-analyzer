@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { basename, resolve } from "node:path";
+import { PRODUCT_VERSION } from "../src/constants.js";
 
 const root = process.cwd();
 const pluginRoot = resolve(root, "plugins/context-surface-analyzer");
@@ -22,6 +23,7 @@ const pluginPackage = await readJson(resolve(pluginRoot, "package.json"), "plugi
 const marketplace = await readJson(resolve(root, ".agents/plugins/marketplace.json"), "repository marketplace");
 const marketplaceEntry = marketplace.plugins?.find((plugin) => plugin.name === manifest.name);
 
+if (packageJson.version !== PRODUCT_VERSION) failures.push("package and runtime product versions differ");
 if (manifest.name !== basename(pluginRoot)) failures.push("plugin folder and manifest names differ");
 if (manifest.version.split("+")[0] !== packageJson.version || pluginPackage.version !== packageJson.version) {
   failures.push("package and plugin base versions must match");

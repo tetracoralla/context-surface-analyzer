@@ -53,13 +53,18 @@ export function summarizeResult(result) {
       ]
     };
   }
+  const ambiguousCollisions = result.tools.ambiguousDueToNameCollision.length;
+  const facts = [
+    `${result.tools.added.length} added`,
+    `${result.tools.removed.length} removed`,
+    `${result.tools.changed.length} changed`
+  ];
+  if (ambiguousCollisions > 0) {
+    facts.push(`${ambiguousCollisions} ambiguous name collision${ambiguousCollisions === 1 ? "" : "s"}`);
+  }
   return {
-    tone: "ok",
+    tone: ambiguousCollisions > 0 ? "warning" : "ok",
     title: `${result.deltas.toolCount >= 0 ? "+" : ""}${result.deltas.toolCount} tools · ${result.deltas.catalogUtf8Bytes >= 0 ? "+" : ""}${result.deltas.catalogUtf8Bytes} bytes`,
-    facts: [
-      `${result.tools.added.length} added`,
-      `${result.tools.removed.length} removed`,
-      `${result.tools.changed.length} changed`
-    ]
+    facts
   };
 }

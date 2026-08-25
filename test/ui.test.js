@@ -22,6 +22,27 @@ test("UI logic creates semantically distinct requests and summaries", () => {
   assert.equal(summary.title, "BAD");
 });
 
+test("UI summary surfaces ambiguous diff collisions as a warning", () => {
+  const summary = summarizeResult({
+    status: "ok",
+    format: "context-surface.diff.v0.1",
+    deltas: { toolCount: 2, catalogUtf8Bytes: 20 },
+    tools: {
+      added: [],
+      removed: [],
+      changed: [],
+      ambiguousDueToNameCollision: [{ name: "dup", beforeCount: 0, afterCount: 2 }]
+    }
+  });
+  assert.equal(summary.tone, "warning");
+  assert.deepEqual(summary.facts, [
+    "0 added",
+    "0 removed",
+    "0 changed",
+    "1 ambiguous name collision"
+  ]);
+});
+
 test("snapshot file loading preserves text and rejects oversized input before analysis", async () => {
   const snapshot = '{"format":"context-surface.snapshot.v0.1"}';
   assert.equal(await readSnapshotFile({ size: snapshot.length, text: async () => snapshot }), snapshot);

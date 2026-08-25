@@ -137,16 +137,16 @@ function compareUniqueTools(before, after) {
   for (const name of names) {
     const beforeTools = beforeGroups.get(name) ?? [];
     const afterTools = afterGroups.get(name) ?? [];
+    if (beforeTools.length > 1 || afterTools.length > 1) {
+      ambiguous.push({ name, beforeCount: beforeTools.length, afterCount: afterTools.length });
+      continue;
+    }
     if (beforeTools.length === 0) {
       added.push(name);
       continue;
     }
     if (afterTools.length === 0) {
       removed.push(name);
-      continue;
-    }
-    if (beforeTools.length !== 1 || afterTools.length !== 1) {
-      ambiguous.push({ name, beforeCount: beforeTools.length, afterCount: afterTools.length });
       continue;
     }
     const left = beforeTools[0];
