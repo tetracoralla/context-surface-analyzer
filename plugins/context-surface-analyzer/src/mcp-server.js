@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import process from "node:process";
+import { pathToFileURL } from "node:url";
 import { utf8Bytes } from "./canonical.js";
 import { LIMITS, PRODUCT_VERSION } from "./constants.js";
 import { executeAnalyze, executeDiff } from "./core.js";
@@ -311,4 +312,4 @@ export function startMcpServer(input = process.stdin, output = process.stdout) {
   });
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) startMcpServer();
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) startMcpServer();

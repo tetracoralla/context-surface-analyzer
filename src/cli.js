@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFile, stat } from "node:fs/promises";
 import process from "node:process";
+import { pathToFileURL } from "node:url";
 import { LIMITS } from "./constants.js";
 import { executeAnalyze, executeDiff } from "./core.js";
 import { boundedErrorResult, ContextSurfaceError } from "./errors.js";
@@ -71,7 +72,7 @@ export async function runCli(argv) {
   return { exitCode: 0, output: executeDiff(beforeJson, afterJson, parsed.maxOutputBytes).json };
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
     const outcome = await runCli(process.argv.slice(2));
     process.stdout.write(`${outcome.output}\n`);

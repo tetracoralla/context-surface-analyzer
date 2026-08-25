@@ -2,7 +2,7 @@
 import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import process from "node:process";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { LIMITS } from "./constants.js";
 import { executeAnalyze, executeDiff } from "./core.js";
 import { boundedErrorResult, ContextSurfaceError } from "./errors.js";
@@ -113,7 +113,7 @@ function parsePort(argv) {
   return value;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const port = parsePort(process.argv.slice(2));
   const server = createUiServer();
   server.listen(port, "127.0.0.1", () => {
