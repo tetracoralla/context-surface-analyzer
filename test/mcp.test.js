@@ -219,6 +219,9 @@ test("actual stdio MCP lifecycle exposes closed read-only tools and recovers aft
   assert.equal(responses[0].result.protocolVersion, "2025-11-25");
   assert.deepEqual(responses[1].result.tools.map((tool) => tool.name), ["context.analyze", "context.diff"]);
   assert.ok(responses[1].result.tools.every((tool) => tool.inputSchema.additionalProperties === false));
+  assert.ok(responses[1].result.tools.every((tool) => tool.outputSchema?.type === "object"));
+  assert.ok(responses[1].result.tools.every((tool) => tool.outputSchema?.oneOf?.length === 2));
+  assert.ok(responses[1].result.tools.every((tool) => tool.outputSchema.oneOf.every((branch) => branch.additionalProperties === false)));
   assert.ok(responses[1].result.tools.every((tool) => tool.annotations.readOnlyHint && !tool.annotations.openWorldHint));
   assert.equal(responses[2].result.structuredContent.error.code, "INVALID_JSON");
   assert.equal(responses[3].result.structuredContent.status, "ok");

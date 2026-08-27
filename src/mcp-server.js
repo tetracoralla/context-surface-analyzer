@@ -22,6 +22,345 @@ const INTEGER_LIMIT_SCHEMA = {
 };
 const JSON_RPC_REQUEST_KEYS = new Set(["jsonrpc", "id", "method", "params"]);
 
+// MCP outputSchema describes structuredContent, not the companion text summary.
+// Keep it closed so a caller can rely on the result without receiving an
+// implementation trace or unbounded arbitrary data in its catalog contract.
+const SHA256_SCHEMA = {
+  type: "string",
+  pattern: "^[a-f0-9]{64}$"
+};
+const NON_NEGATIVE_INTEGER_SCHEMA = {
+  type: "integer",
+  minimum: 0
+};
+const POSITIVE_INTEGER_SCHEMA = {
+  type: "integer",
+  minimum: 1
+};
+const SOURCE_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["id"],
+  properties: {
+    id: { type: "string", minLength: 1, maxLength: 256 },
+    revision: { type: "string", minLength: 1, maxLength: 256 }
+  }
+};
+const SCHEMA_METRIC_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["sha256", "canonicalUtf8Bytes"],
+  properties: {
+    sha256: SHA256_SCHEMA,
+    canonicalUtf8Bytes: NON_NEGATIVE_INTEGER_SCHEMA
+  }
+};
+const TOKEN_MEASUREMENT_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["metric", "value", "source", "provider", "model", "serialization"],
+  properties: {
+    metric: { const: "input_tokens" },
+    value: NON_NEGATIVE_INTEGER_SCHEMA,
+    source: { enum: ["host-observed", "external-counter"] },
+    provider: { type: "string", minLength: 1, maxLength: 256 },
+    model: { type: "string", minLength: 1, maxLength: 256 },
+    serialization: { type: "string", minLength: 1, maxLength: 256 },
+    tokenizerVersion: { type: "string", minLength: 1, maxLength: 256 }
+  }
+};
+const ERROR_DETAILS_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    path: { type: "string", minLength: 1 },
+    fieldCount: NON_NEGATIVE_INTEGER_SCHEMA,
+    actual: NON_NEGATIVE_INTEGER_SCHEMA,
+    limit: POSITIVE_INTEGER_SCHEMA,
+    fields: {
+      type: "array",
+      items: { type: "string", minLength: 1 },
+      minItems: 1
+    },
+    name: { type: "string", minLength: 1, maxLength: 256 }
+  }
+};
+const ERROR_RESULT_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["status", "error"],
+  properties: {
+    status: { const: "error" },
+    error: {
+      type: "object",
+      additionalProperties: false,
+      required: ["code", "message"],
+      properties: {
+        code: {
+          enum: [
+            "INTERNAL_ERROR",
+            "INVALID_ARGUMENT",
+            "INVALID_INPUT",
+            "INVALID_JSON",
+            "INVALID_OUTPUT_LIMIT",
+            "INVALID_SNAPSHOT",
+            "LIMIT_EXCEEDED",
+            "RESULT_BUDGET_EXCEEDED",
+            "UNKNOWN_FIELD",
+            "UNKNOWN_TOOL",
+            "UNSUPPORTED_FORMAT"
+          ]
+        },
+        message: { type: "string", minLength: 1 },
+        details: ERROR_DETAILS_SCHEMA
+      }
+    }
+  }
+};
+const ANALYZE_RESULT_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "format",
+    "status",
+    "source",
+    "snapshot",
+    "catalog",
+    "counts",
+    "tools",
+    "exactDuplicateSchemas",
+    "hardNameCollisions",
+    "budgetChecks",
+    "tokenMeasurements",
+    "measurementPolicy"
+  ],
+  properties: {
+    format: { const: "context-surface.analysis.v0.1" },
+    status: { const: "ok" },
+    source: SOURCE_SCHEMA,
+    snapshot: SCHEMA_METRIC_SCHEMA,
+    catalog: {
+      type: "object",
+      additionalProperties: false,
+      required: ["sha256", "canonicalUtf8Bytes", "largestToolUtf8Bytes"],
+      properties: {
+        sha256: SHA256_SCHEMA,
+        canonicalUtf8Bytes: NON_NEGATIVE_INTEGER_SCHEMA,
+        largestToolUtf8Bytes: NON_NEGATIVE_INTEGER_SCHEMA
+      }
+    },
+    counts: {
+      type: "object",
+      additionalProperties: false,
+      required: ["tools", "schemas", "describedTools", "tokenMeasurements"],
+      properties: {
+        tools: NON_NEGATIVE_INTEGER_SCHEMA,
+        schemas: NON_NEGATIVE_INTEGER_SCHEMA,
+        describedTools: NON_NEGATIVE_INTEGER_SCHEMA,
+        tokenMeasurements: NON_NEGATIVE_INTEGER_SCHEMA
+      }
+    },
+    tools: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["index", "name", "canonicalUtf8Bytes", "descriptionUtf8Bytes", "inputSchema"],
+        properties: {
+          index: NON_NEGATIVE_INTEGER_SCHEMA,
+          name: { type: "string", minLength: 1, maxLength: 256 },
+          canonicalUtf8Bytes: NON_NEGATIVE_INTEGER_SCHEMA,
+          descriptionUtf8Bytes: NON_NEGATIVE_INTEGER_SCHEMA,
+          inputSchema: SCHEMA_METRIC_SCHEMA,
+          outputSchema: SCHEMA_METRIC_SCHEMA
+        }
+      }
+    },
+    exactDuplicateSchemas: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["sha256", "canonicalUtf8Bytes", "occurrences"],
+        properties: {
+          sha256: SHA256_SCHEMA,
+          canonicalUtf8Bytes: NON_NEGATIVE_INTEGER_SCHEMA,
+          occurrences: {
+            type: "array",
+            minItems: 2,
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["toolIndex", "toolName", "role"],
+              properties: {
+                toolIndex: NON_NEGATIVE_INTEGER_SCHEMA,
+                toolName: { type: "string", minLength: 1, maxLength: 256 },
+                role: { enum: ["input", "output"] }
+              }
+            }
+          }
+        }
+      }
+    },
+    hardNameCollisions: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["name", "toolIndices"],
+        properties: {
+          name: { type: "string", minLength: 1, maxLength: 256 },
+          toolIndices: {
+            type: "array",
+            minItems: 2,
+            items: NON_NEGATIVE_INTEGER_SCHEMA
+          }
+        }
+      }
+    },
+    budgetChecks: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["metric", "actual", "limit", "status"],
+        properties: {
+          metric: {
+            enum: [
+              "catalog.canonicalUtf8Bytes",
+              "catalog.largestToolUtf8Bytes",
+              "counts.tools"
+            ]
+          },
+          actual: NON_NEGATIVE_INTEGER_SCHEMA,
+          limit: POSITIVE_INTEGER_SCHEMA,
+          status: { enum: ["within", "exceeded"] }
+        }
+      }
+    },
+    tokenMeasurements: {
+      type: "array",
+      items: TOKEN_MEASUREMENT_SCHEMA
+    },
+    measurementPolicy: { const: "reported-only; no byte-to-token inference" }
+  }
+};
+const DIFF_RESULT_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["format", "status", "before", "after", "deltas", "tools", "tokenMeasurements", "measurementPolicy"],
+  properties: {
+    format: { const: "context-surface.diff.v0.1" },
+    status: { const: "ok" },
+    before: {
+      type: "object",
+      additionalProperties: false,
+      required: ["source", "snapshotSha256", "catalogUtf8Bytes", "toolCount", "schemaCount", "hardNameCollisionCount"],
+      properties: {
+        source: SOURCE_SCHEMA,
+        snapshotSha256: SHA256_SCHEMA,
+        catalogUtf8Bytes: NON_NEGATIVE_INTEGER_SCHEMA,
+        toolCount: NON_NEGATIVE_INTEGER_SCHEMA,
+        schemaCount: NON_NEGATIVE_INTEGER_SCHEMA,
+        hardNameCollisionCount: NON_NEGATIVE_INTEGER_SCHEMA
+      }
+    },
+    after: {
+      type: "object",
+      additionalProperties: false,
+      required: ["source", "snapshotSha256", "catalogUtf8Bytes", "toolCount", "schemaCount", "hardNameCollisionCount"],
+      properties: {
+        source: SOURCE_SCHEMA,
+        snapshotSha256: SHA256_SCHEMA,
+        catalogUtf8Bytes: NON_NEGATIVE_INTEGER_SCHEMA,
+        toolCount: NON_NEGATIVE_INTEGER_SCHEMA,
+        schemaCount: NON_NEGATIVE_INTEGER_SCHEMA,
+        hardNameCollisionCount: NON_NEGATIVE_INTEGER_SCHEMA
+      }
+    },
+    deltas: {
+      type: "object",
+      additionalProperties: false,
+      required: ["catalogUtf8Bytes", "toolCount", "schemaCount"],
+      properties: {
+        catalogUtf8Bytes: { type: "integer" },
+        toolCount: { type: "integer" },
+        schemaCount: { type: "integer" }
+      }
+    },
+    tools: {
+      type: "object",
+      additionalProperties: false,
+      required: ["added", "removed", "changed", "unchanged", "ambiguousDueToNameCollision", "reordered"],
+      properties: {
+        added: { type: "array", items: { type: "string", minLength: 1, maxLength: 256 } },
+        removed: { type: "array", items: { type: "string", minLength: 1, maxLength: 256 } },
+        changed: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["name", "beforeSha256", "afterSha256", "canonicalUtf8BytesDelta", "descriptionChanged", "inputSchemaChanged", "outputSchemaChanged"],
+            properties: {
+              name: { type: "string", minLength: 1, maxLength: 256 },
+              beforeSha256: SHA256_SCHEMA,
+              afterSha256: SHA256_SCHEMA,
+              canonicalUtf8BytesDelta: { type: "integer" },
+              descriptionChanged: { type: "boolean" },
+              inputSchemaChanged: { type: "boolean" },
+              outputSchemaChanged: { type: "boolean" }
+            }
+          }
+        },
+        unchanged: { type: "array", items: { type: "string", minLength: 1, maxLength: 256 } },
+        ambiguousDueToNameCollision: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["name", "beforeCount", "afterCount"],
+            properties: {
+              name: { type: "string", minLength: 1, maxLength: 256 },
+              beforeCount: NON_NEGATIVE_INTEGER_SCHEMA,
+              afterCount: NON_NEGATIVE_INTEGER_SCHEMA
+            }
+          }
+        },
+        reordered: { type: ["boolean", "null"] }
+      }
+    },
+    tokenMeasurements: {
+      type: "object",
+      additionalProperties: false,
+      required: ["matched", "added", "removed"],
+      properties: {
+        matched: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["metric", "source", "provider", "model", "serialization", "before", "after", "delta"],
+            properties: {
+              metric: { const: "input_tokens" },
+              source: { enum: ["host-observed", "external-counter"] },
+              provider: { type: "string", minLength: 1, maxLength: 256 },
+              model: { type: "string", minLength: 1, maxLength: 256 },
+              serialization: { type: "string", minLength: 1, maxLength: 256 },
+              tokenizerVersion: { type: "string", minLength: 1, maxLength: 256 },
+              before: NON_NEGATIVE_INTEGER_SCHEMA,
+              after: NON_NEGATIVE_INTEGER_SCHEMA,
+              delta: { type: "integer" }
+            }
+          }
+        },
+        added: NON_NEGATIVE_INTEGER_SCHEMA,
+        removed: NON_NEGATIVE_INTEGER_SCHEMA
+      }
+    },
+    measurementPolicy: { const: "matched labels only; no byte-to-token inference" }
+  }
+};
+
 export const TOOL_DEFINITIONS = [
   {
     name: "context.analyze",
@@ -38,6 +377,10 @@ export const TOOL_DEFINITIONS = [
         },
         max_output_bytes: INTEGER_LIMIT_SCHEMA
       }
+    },
+    outputSchema: {
+      type: "object",
+      oneOf: [ANALYZE_RESULT_SCHEMA, ERROR_RESULT_SCHEMA]
     },
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false }
   },
@@ -61,6 +404,10 @@ export const TOOL_DEFINITIONS = [
         },
         max_output_bytes: INTEGER_LIMIT_SCHEMA
       }
+    },
+    outputSchema: {
+      type: "object",
+      oneOf: [DIFF_RESULT_SCHEMA, ERROR_RESULT_SCHEMA]
     },
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false }
   }
