@@ -226,3 +226,14 @@ test("actual stdio MCP lifecycle exposes closed read-only tools and recovers aft
   assert.equal(responses[2].result.structuredContent.error.code, "INVALID_JSON");
   assert.equal(responses[3].result.structuredContent.status, "ok");
 });
+
+test("unknown tool names outside the advertised schema stay out of error details", () => {
+  for (const hostile of [123, null, { nested: true }, "x".repeat(257)]) {
+    const response = callTool(hostile, {});
+    assert.equal(response.structuredContent.error.code, "UNKNOWN_TOOL");
+    assert.equal(response.structuredContent.error.details, undefined);
+  }
+  const named = callTool("other.tool", {});
+  assert.equal(named.structuredContent.error.code, "UNKNOWN_TOOL");
+  assert.deepEqual(named.structuredContent.error.details, { name: "other.tool" });
+});

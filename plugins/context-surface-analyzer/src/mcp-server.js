@@ -540,7 +540,15 @@ export function callTool(name, args) {
       failureLimit = execution.limit;
       return toolSuccess(name, execution);
     }
-    throw new ContextSurfaceError("UNKNOWN_TOOL", "The requested tool is not available.", { name });
+    // The advertised error details schema declares `name` as a bounded string;
+    // keep hostile non-string names out of the structured result.
+    throw new ContextSurfaceError(
+      "UNKNOWN_TOOL",
+      "The requested tool is not available.",
+      typeof name === "string" && name.length > 0 && utf8Bytes(name) <= LIMITS.maxJsonRpcMethodBytes
+        ? { name }
+        : undefined
+    );
   } catch (error) {
     const errorLimit = Number.isSafeInteger(error?.details?.limit)
       ? Math.min(failureLimit, error.details.limit)

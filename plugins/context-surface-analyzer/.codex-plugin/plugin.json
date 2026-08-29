@@ -1,6 +1,6 @@
 {
   "name": "context-surface-analyzer",
-  "version": "0.1.1+codex.20260825210239",
+  "version": "0.1.2+codex.20260830005023",
   "description": "Deterministically measure and compare explicit Agent tool-catalog snapshots.",
   "author": {
     "name": "openAdam"
