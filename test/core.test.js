@@ -182,3 +182,32 @@ test("wide snapshot unknown-field errors report a count without echoing field na
     return true;
   });
 });
+
+test("measurement identity keeps separator characters inside labels unambiguous", () => {
+  const before = snapshot({
+    measurements: [{
+      metric: "input_tokens",
+      value: 100,
+      source: "host-observed",
+      provider: "a",
+      model: "b\u001fc",
+      serialization: "d",
+      tokenizerVersion: "e"
+    }]
+  });
+  const after = snapshot({
+    measurements: [{
+      metric: "input_tokens",
+      value: 999,
+      source: "host-observed",
+      provider: "a",
+      model: "b",
+      serialization: "c",
+      tokenizerVersion: "d\u001fe"
+    }]
+  });
+  const result = executeDiff(JSON.stringify(before), JSON.stringify(after)).result;
+  assert.deepEqual(result.tokenMeasurements.matched, []);
+  assert.equal(result.tokenMeasurements.added, 1);
+  assert.equal(result.tokenMeasurements.removed, 1);
+});

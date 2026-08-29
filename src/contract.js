@@ -119,6 +119,9 @@ function validateTools(tools) {
 }
 
 function measurementIdentity(measurement) {
+  // JSON string literals keep the join unambiguous: a crafted label that
+  // itself contains the unit separator encodes it as escaped text, so two
+  // different label sets can never produce the same identity string.
   return [
     measurement.metric,
     measurement.source,
@@ -126,7 +129,9 @@ function measurementIdentity(measurement) {
     measurement.model,
     measurement.serialization,
     measurement.tokenizerVersion ?? ""
-  ].join("\u001f");
+  ]
+    .map((field) => JSON.stringify(field))
+    .join("\u001f");
 }
 
 function validateMeasurements(measurements = []) {
