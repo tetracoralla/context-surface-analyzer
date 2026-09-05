@@ -1,6 +1,10 @@
 # Context Surface Analyzer repository contract
 
-This repository is an independent provider product. Read `docs/PRODUCT_MODEL.md`
+Current source ownership is [context-surface-analyzer in Agent Host](https://github.com/tetracoralla/agent-host-suite/tree/main/packages/context-surface-analyzer).
+This repository retains historical source. Apply new implementation and release
+work in Agent Host; the contract below describes this retained implementation.
+
+Read `docs/PRODUCT_MODEL.md`
 and `docs/REVIEW_CONTRACT.md` before changing behavior, schemas, limits, or
 claims.
 

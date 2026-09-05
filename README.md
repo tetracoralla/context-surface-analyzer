@@ -1,5 +1,10 @@
 # Context Surface Analyzer
 
+> **Current source:** [context-surface-analyzer in Agent Host](https://github.com/tetracoralla/agent-host-suite/tree/main/packages/context-surface-analyzer).
+> Development, installation, and current integration documentation now belong to
+> Agent Host. This repository retains the earlier standalone source; the
+> instructions below describe that historical version.
+
 A local, deterministic utility for measuring one explicit Agent tool-catalog
 snapshot and comparing two snapshots.
 
